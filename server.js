@@ -7,7 +7,7 @@ const port = 3500;
 
 app.use(cors());
 
-app.get('/api/hello', async (req, res) => {
+app.get('/', async (req, res) => {
   try {
     const options = {
       hostname: 'www.dszo.cz',
