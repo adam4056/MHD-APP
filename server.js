@@ -3,11 +3,12 @@ const cors = require('cors');
 const https = require('https');
 
 const app = express();
-const port = 3500;
+const port = 3000;
 
 app.use(cors());
 
-app.get('/', async (req, res) => {
+// Přidání nového endpointu pro volání API přes proxy
+app.get('/api/data', async (req, res) => {
   try {
     const options = {
       hostname: 'www.dszo.cz',
