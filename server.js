@@ -1,46 +1,26 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
-const https = require('https');
-
 const app = express();
-const port = 3000;
-
 app.use(cors());
-
-// Přidání nového endpointu pro volání API přes proxy
-app.get('/api/data', async (req, res) => {
-  try {
-    const options = {
-      hostname: 'www.dszo.cz',
-      path: '/online/tabs2.php',
-      method: 'GET',
-    };
-
-    const apiRequest = https.request(options, (apiResponse) => {
-      let data = '';
-
-      apiResponse.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      apiResponse.on('end', () => {
-        // Zpracování odpovědi a odeslání klientovi
-        res.json({ message: JSON.parse(data) });
-      });
-    });
-
-    apiRequest.on('error', (error) => {
-      console.error('Chyba při volání API:', error.message);
-      res.status(500).json({ error: 'Interní chyba serveru' });
-    });
-
-    apiRequest.end();
-  } catch (error) {
-    console.error('Chyba:', error.message);
-    res.status(500).json({ error: 'Interní chyba serveru' });
-  }
+app.get('/api', async (req, res) => {
+    try {
+        const response1 = await axios.get('http://online.dszo.cz/delay.php');
+        const response2 = await axios.get('https://www.dszo.cz/online/zastavky_json.php');
+        const data1 = response1.data.split(';');
+        const data2 = JSON.parse(response2.data);
+        const result = {
+            cisloLinky: data1[3],
+            cisloVozu: data1[0],
+            posledniZastavka: data2.root.find(z => z.pasport === data1[1].substring(0, 3) && z.sloupek === data1[1].substring(3)).nazev,
+            konecnaZastavka: data2.root.find(z => z.pasport === data1[8].substring(0, 3) && z.sloupek === data1[8].substring(3)).nazev,
+            souradnice: { lat: data1[9], lon: data1[10] }
+        };
+        res.json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
 });
-
-app.listen(port, () => {
-  console.log(`Server běží na http://localhost:${port}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
